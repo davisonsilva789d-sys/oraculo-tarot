@@ -1,0 +1,422 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Oráculo de Tarot Existencial</title>
+    <style>
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            font-family: 'Georgia', serif;
+        }
+
+        body {
+            background: #08020f;
+            background-image: radial-gradient(circle at 50% 20%, #1a0933, #08020f 80%);
+            color: #f3e5ab;
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: flex-start;
+            padding: 20px 10px;
+        }
+
+        .container {
+            width: 100%;
+            max-width: 650px;
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+        }
+
+        .card-panel {
+            background: rgba(21, 10, 33, 0.85);
+            border: 1px solid #dfb76c;
+            border-radius: 12px;
+            padding: 25px;
+            text-align: center;
+            box-shadow: 0 0 20px rgba(223, 183, 108, 0.15);
+            position: relative;
+        }
+
+        .category {
+            font-size: 0.8rem;
+            letter-spacing: 3px;
+            color: #dfb76c;
+            text-transform: uppercase;
+            margin-bottom: 10px;
+        }
+
+        .question-text {
+            font-size: 1.2rem;
+            line-height: 1.6;
+            color: #fff8e7;
+            font-weight: bold;
+            margin-bottom: 20px;
+            min-height: 60px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .options-grid {
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+        }
+
+        .btn-opt {
+            background: rgba(10, 5, 20, 0.6);
+            border: 1px solid #dfb76c44;
+            color: #f3e5ab;
+            padding: 12px 15px;
+            border-radius: 8px;
+            cursor: pointer;
+            text-align: left;
+            transition: all 0.3s ease;
+            font-size: 0.95rem;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .btn-opt:hover {
+            border-color: #dfb76c;
+            background: rgba(223, 183, 108, 0.15);
+        }
+
+        .btn-opt span {
+            font-weight: bold;
+            color: #dfb76c;
+        }
+
+        /* Painel do Chat */
+        .chat-panel {
+            background: rgba(15, 8, 25, 0.9);
+            border: 1px solid #dfb76c55;
+            border-radius: 12px;
+            display: flex;
+            flex-direction: column;
+            height: 420px;
+            overflow: hidden;
+        }
+
+        .chat-header {
+            padding: 12px 15px;
+            background: rgba(223, 183, 108, 0.1);
+            border-bottom: 1px solid #dfb76c33;
+            font-size: 0.9rem;
+            color: #dfb76c;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .chat-box {
+            flex: 1;
+            padding: 15px;
+            overflow-y: auto;
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+        }
+
+        .msg {
+            max-width: 85%;
+            padding: 10px 14px;
+            border-radius: 10px;
+            font-size: 0.9rem;
+            line-height: 1.4;
+            white-space: pre-wrap;
+        }
+
+        .msg.user {
+            align-self: flex-end;
+            background: #dfb76c22;
+            border: 1px solid #dfb76c66;
+            color: #fff8e7;
+        }
+
+        .msg.ai {
+            align-self: flex-start;
+            background: #1e1233;
+            border: 1px solid #3d2366;
+            color: #d1c2eb;
+        }
+
+        .chat-input-area {
+            display: flex;
+            padding: 10px;
+            gap: 8px;
+            border-top: 1px solid #dfb76c33;
+            background: rgba(5, 2, 10, 0.8);
+        }
+
+        .chat-input-area input {
+            flex: 1;
+            background: #0f0819;
+            border: 1px solid #dfb76c44;
+            padding: 10px 15px;
+            border-radius: 20px;
+            color: #fff8e7;
+            outline: none;
+        }
+
+        .chat-input-area button {
+            background: #dfb76c;
+            color: #08020f;
+            border: none;
+            padding: 0 18px;
+            border-radius: 20px;
+            font-weight: bold;
+            cursor: pointer;
+        }
+
+        .api-key-bar {
+            background: rgba(223, 183, 108, 0.1);
+            padding: 8px 12px;
+            border-radius: 8px;
+            margin-bottom: 15px;
+            display: flex;
+            gap: 8px;
+            align-items: center;
+        }
+
+        .api-key-bar input {
+            flex: 1;
+            background: #0f0819;
+            border: 1px solid #dfb76c44;
+            color: #fff;
+            padding: 6px 10px;
+            border-radius: 4px;
+            font-size: 0.8rem;
+        }
+
+        .loading-overlay {
+            position: fixed;
+            top: 0; left: 0; width: 100vw; height: 100vh;
+            background: rgba(8, 2, 15, 0.85);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            z-index: 100;
+            opacity: 0;
+            pointer-events: none;
+            transition: opacity 0.3s;
+        }
+
+        .loading-overlay.active {
+            opacity: 1;
+            pointer-events: all;
+        }
+
+        .star {
+            width: 30px;
+            height: 30px;
+            background: #dfb76c;
+            clip-path: polygon(50% 0%, 61% 35%, 98% 35%, 68% 57%, 79% 91%, 50% 70%, 21% 91%, 32% 57%, 2% 35%, 39% 35%);
+            animation: spin 1.2s infinite linear;
+        }
+
+        @keyframes spin {
+            0% { transform: scale(1) rotate(0deg); }
+            50% { transform: scale(2.5) rotate(180deg); }
+            100% { transform: scale(1) rotate(360deg); }
+        }
+    </style>
+</head>
+<body>
+
+    <div class="container">
+        <!-- Carta / Pergunta -->
+        <div class="card-panel">
+            <div class="api-key-bar">
+                <span style="font-size:0.8rem; color:#dfb76c;">Chave API:</span>
+                <input type="password" id="apiKeyInput" placeholder="Insira sua Chave API do Gemini..." onchange="saveApiKey()">
+            </div>
+
+            <div class="category">Harmonia Existencial</div>
+            <div class="question-text" id="questionBox">"A verdadeira sabedoria reside no avanço da ciência ou no retorno à simplicidade da natureza?"</div>
+
+            <div class="options-grid">
+                <button class="btn-opt" onclick="selectOption('Acredito que o progresso científico é o único caminho real.')">
+                    <span>✓</span> Resposta Positiva (Caminho da Ciência)
+                </button>
+                <button class="btn-opt" onclick="selectOption('Acredito na simplicidade e no retorno à natureza.')">
+                    <span>✕</span> Resposta Negativa (Retorno à Natureza)
+                </button>
+                <button class="btn-opt" onclick="selectOption('Vejo um paradoxo e equilíbrio entre ambas as partes.')">
+                    <span>⚖</span> Nenhuma das Opções (Paradoxo/Neutro)
+                </button>
+                <button class="btn-opt" onclick="generateNewQuestion()">
+                    <span>↻</span> Trocar Pergunta (Pergunta Repetida / Outra Carta)
+                </button>
+            </div>
+        </div>
+
+        <!-- Chat Oracular Conectado à IA -->
+        <div class="chat-panel">
+            <div class="chat-header">
+                <span>✦ Conselheiro Oracular (IA Gemini)</span>
+                <span style="font-size:0.75rem; opacity:0.7;">Online</span>
+            </div>
+            <div class="chat-box" id="chatBox">
+                <div class="msg ai">Saudações, viajante. Qual reflexão você traz ao oráculo hoje?</div>
+            </div>
+            <div class="chat-input-area">
+                <input type="text" id="userInput" placeholder="Converse com o oráculo..." onkeydown="if(event.key==='Enter') sendChatMessage()">
+                <button onclick="sendChatMessage()">Enviar</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Tela de Carregamento (Estrela) -->
+    <div class="loading-overlay" id="loadingOverlay">
+        <div class="star"></div>
+    </div>
+
+    <script>
+        // Chave padrão caso não seja digitada no campo acima
+        const DEFAULT_API_KEY = 'AQ.Ab8RN6ItSBicon9M6L5yn5aZtqJRJHl1aQa9sbglDIMAz7jBww';
+
+        let chatHistory = [];
+        let currentQuestion = "A verdadeira sabedoria reside no avanço da ciência ou no retorno à simplicidade da natureza?";
+        let askedQuestions = JSON.parse(localStorage.getItem('tarot_asked_questions') || '[]');
+
+        window.onload = function() {
+            const savedKey = localStorage.getItem('gemini_api_key');
+            if (savedKey) {
+                document.getElementById('apiKeyInput').value = savedKey;
+            } else {
+                document.getElementById('apiKeyInput').value = DEFAULT_API_KEY;
+            }
+        };
+
+        function saveApiKey() {
+            const key = document.getElementById('apiKeyInput').value.trim();
+            localStorage.setItem('gemini_api_key', key);
+        }
+
+        function getApiKey() {
+            const inputVal = document.getElementById('apiKeyInput').value.trim();
+            return inputVal || localStorage.getItem('gemini_api_key') || DEFAULT_API_KEY;
+        }
+
+        async function callGemini(contents) {
+            const key = getApiKey();
+            if (!key) {
+                throw new Error("Por favor, informe uma chave de API do Gemini.");
+            }
+
+            // Lista atualizada dos modelos oficiais suportados
+            const models = ['gemini-2.5-flash', 'gemini-2.0-flash', 'gemini-1.5-flash-latest'];
+            let lastError = null;
+
+            for (const model of models) {
+                try {
+                    const url = `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${encodeURIComponent(key)}`;
+                    const response = await fetch(url, {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ contents: contents })
+                    });
+                    
+                    const data = await response.json();
+                    if (response.ok && data.candidates && data.candidates[0]?.content?.parts[0]?.text) {
+                        return data.candidates[0].content.parts[0].text;
+                    } else if (data.error) {
+                        lastError = data.error.message;
+                    }
+                } catch (e) {
+                    lastError = e.message;
+                }
+            }
+            throw new Error(lastError || "Falha ao contactar a API.");
+        }
+
+        async function sendChatMessage() {
+            const input = document.getElementById('userInput');
+            const text = input.value.trim();
+            if (!text) return;
+
+            appendMsg(text, 'user');
+            input.value = '';
+
+            const loadingId = appendMsg('O Oráculo consulta os astros...', 'ai');
+
+            chatHistory.push({ role: 'user', parts: [{ text: text }] });
+
+            try {
+                const contextPrompt = `Você é um sábio e místico Leitor de Tarot e Conselheiro Existencial. 
+Pergunta atual sob consulta: "${currentQuestion}". 
+Responda ao usuário com tom reflexivo, místico e enigmático.
+
+Mensagem do usuário: ${text}`;
+
+                const contentsPayload = [
+                    ...chatHistory.slice(0, -1),
+                    { role: 'user', parts: [{ text: contextPrompt }] }
+                ];
+
+                const aiReply = await callGemini(contentsPayload);
+                document.getElementById(loadingId).innerText = aiReply;
+                chatHistory.push({ role: 'model', parts: [{ text: aiReply }] });
+
+            } catch (err) {
+                document.getElementById(loadingId).innerText = `[Erro na resposta]: ${err.message}`;
+            }
+        }
+
+        function selectOption(optionText) {
+            document.getElementById('userInput').value = optionText;
+            sendChatMessage();
+        }
+
+        async function generateNewQuestion() {
+            showLoading(true);
+            try {
+                const promptText = `Gere UMA única pergunta inédita, profunda e existencial. 
+Retorne apenas o texto da pergunta entre aspas.`;
+
+                const contents = [{ role: 'user', parts: [{ text: promptText }] }];
+                const newQuestionRaw = await callGemini(contents);
+                const newQuestion = newQuestionRaw.trim().replace(/^"|"$/g, '');
+
+                currentQuestion = newQuestion;
+                document.getElementById('questionBox').innerText = `"${newQuestion}"`;
+
+                askedQuestions.push(newQuestion);
+                localStorage.setItem('tarot_asked_questions', JSON.stringify(askedQuestions));
+
+                chatHistory = [];
+                document.getElementById('chatBox').innerHTML = `<div class="msg ai">Uma nova carta se revela: "${newQuestion}". O que sua intuição diz?</div>`;
+
+            } catch (e) {
+                alert(`Erro ao sortear nova carta: ${e.message}`);
+            } finally {
+                showLoading(false);
+            }
+        }
+
+        function appendMsg(text, sender) {
+            const chatBox = document.getElementById('chatBox');
+            const msg = document.createElement('div');
+            const id = 'msg-' + Date.now();
+            msg.id = id;
+            msg.className = `msg ${sender}`;
+            msg.innerText = text;
+            chatBox.appendChild(msg);
+            chatBox.scrollTop = chatBox.scrollHeight;
+            return id;
+        }
+
+        function showLoading(active) {
+            const overlay = document.getElementById('loadingOverlay');
+            if (active) overlay.classList.add('active');
+            else overlay.classList.remove('active');
+        }
+    </script>
+</body>
+</html>
